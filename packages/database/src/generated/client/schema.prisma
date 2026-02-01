@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js" // Use the standard JS provider
+  output   = "../src/generated/client" // FIX: Puts files where your TS code expects them
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+
+  subscriptions Subscription[]
+  updatedAt     DateTime       @default(now())
+
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id     Int @id @default(autoincrement())
+  userId Int
+
+  plan      String
+  startDate DateTime
+  endDate   DateTime
+  status    SubscriptionStatus
+
+  user User @relation(fields: [userId], references: [id])
+
+  emailLogs EmailLog[]
+  createdAt DateTime   @default(now())
+}
+
+model EmailLog {
+  id             Int @id @default(autoincrement())
+  subscriptionId Int
+
+  type      EmailType
+  sentAt    DateTime
+  openedAt  DateTime?
+  clickedAt DateTime?
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  RENEWED
+  CANCELLED
+}
+
+enum EmailType {
+  DAYS_30
+  DAYS_15
+  DAYS_7
+  OVERDUE
+}
+
+model Employee {
+  id       Int            @id @default(autoincrement())
+  name     String
+  email    String         @unique
+  password String
+  status   EmployeeStatus
+
+  roles         EmployeeRoleMap[]
+  refreshTokens RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * =======================
+ * ROLE SYSTEM
+ * =======================
+ */
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  employees EmployeeRoleMap[]
+  policies  RolePolicyMap[]
+
+  createdAt DateTime @default(now())
+}
+
+model EmployeeRoleMap {
+  id         Int @id @default(autoincrement())
+  employeeId Int
+  roleId     Int
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  role     Role     @relation(fields: [roleId], references: [id])
+}
+
+/**
+ * =======================
+ * POLICY SYSTEM
+ * =======================
+ */
+
+model Policy {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  roles       RolePolicyMap[]
+  permissions PolicyPermission[]
+
+  createdAt DateTime @default(now())
+}
+
+model RolePolicyMap {
+  id       Int @id @default(autoincrement())
+  roleId   Int
+  policyId Int
+
+  role   Role   @relation(fields: [roleId], references: [id])
+  policy Policy @relation(fields: [policyId], references: [id])
+}
+
+/**
+ * =======================
+ * PERMISSION SYSTEM
+ * =======================
+ */
+
+model PolicyPermission {
+  id       Int @id @default(autoincrement())
+  policyId Int
+
+  resource String // "email", "subscription", "customer"
+  action   String // "send", "view", "bulk", "delete"
+
+  effect PolicyEffect // ALLOW or DENY
+
+  condition Json? // ABAC (optional)
+
+  policy Policy @relation(fields: [policyId], references: [id])
+}
+
+/**
+ * =======================
+ * AUTH
+ * =======================
+ */
+
+model RefreshToken {
+  id         Int       @id @default(autoincrement())
+  token      String    @unique
+  employeeId Int
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+/**
+ * =======================
+ * ENUMS
+ * =======================
+ */
+
+enum EmployeeStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum PolicyEffect {
+  ALLOW
+  DENY
+}
