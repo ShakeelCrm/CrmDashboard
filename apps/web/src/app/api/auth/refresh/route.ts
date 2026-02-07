@@ -1,39 +1,68 @@
 import { NextResponse } from "next/server";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { refreshToken } = body;
+    const { refreshToken } = await request.json();
 
-    // Forward refresh token request to Express Employee Refresh Endpoint
-    const res = await fetch(`${API_URL}/employees/refresh-token`, {
+    if (!refreshToken) {
+      return NextResponse.json(
+        { error: "Refresh token is required" },
+        { status: 400 }
+      );
+    }
+
+    // Call the backend API to refresh the token
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const res = await fetch(`${BACKEND_URL}/api/v1/employees/refresh-token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ refreshToken }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      // Handle the new error response format from the backend
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || data.message || "Token refresh failed"
-        },
+        { error: data?.error || data?.message || "Token refresh failed" },
         { status: res.status }
       );
     }
 
-    return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Internal Server Error"
+    // Update the cookies with new tokens
+    const response = NextResponse.json(
+      { 
+        success: true,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
       },
+      { status: 200 }
+    );
+
+    // Set HTTP-only cookies for security
+    response.cookies.set("access_token", data.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: "/",
+      sameSite: "strict",
+    });
+
+    response.cookies.set("refresh_token", data.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+      sameSite: "strict",
+    });
+
+    return response;
+  } catch (error: any) {
+    console.error("Token refresh error:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred during token refresh" },
       { status: 500 }
     );
   }

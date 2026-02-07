@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,16 +35,10 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("success")) {
@@ -62,29 +56,20 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setError(null);
-    
-    // 1. Call NextAuth signIn
-    const res = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false, // We handle redirection manually to show errors
-    });
+    setIsLoading(true);
 
-    if (res?.error) {
-      // Try to parse the error message if it's JSON
-      try {
-        const errorData = JSON.parse(res.error);
-        setError(errorData.error || "Login failed");
-      } catch (e) {
-        // If not JSON, use the raw error message
-        setError(res.error || "Invalid email or password");
-      }
-    } else if (res?.ok) {
+    try {
+      // Use the auth context login method
+      await login(values.email, values.password);
+      
+      // Login successful, redirect to dashboard
       router.push("/"); // Redirect to dashboard on success
       router.refresh();
-    } else {
-      // Check the browser console for the actual backend error
-      setError("Invalid email or password. Check browser console for details.");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -109,7 +94,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            
+
             <FormField
               control={form.control}
               name="email"
@@ -137,9 +122,9 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Logging in..." : "Login"}
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
         </Form>

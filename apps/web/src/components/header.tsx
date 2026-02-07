@@ -1,17 +1,16 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut({ redirect: false });
+    await logout();
     router.push('/login');
   };
 
@@ -21,11 +20,11 @@ export function Header() {
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold">Employee Portal</h1>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="text-right mr-4">
-            <p className="text-sm font-medium">{session?.user?.name}</p>
-            <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
+            <p className="text-sm font-medium">{user?.name || user?.email?.split('@')[0]}</p>
+            <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />

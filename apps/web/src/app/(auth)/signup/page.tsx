@@ -51,7 +51,7 @@ export default function SignupPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // Calls your Next.js Proxy (which forwards to Express)
-      const res = await fetch("/api/auth/signup", { 
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -85,7 +85,7 @@ export default function SignupPage() {
                 {error}
               </div>
             )}
-            
+
             <FormField
               control={form.control}
               name="name"
@@ -99,7 +99,7 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="email"
@@ -127,7 +127,7 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            
+
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? "Creating..." : "Sign Up"}
             </Button>

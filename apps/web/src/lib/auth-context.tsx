@@ -1,67 +1,84 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useSession } from "next-auth/react";
-import { refreshAccessToken, logout as logoutService } from "@/lib/auth-service";
+import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { refreshAccessToken, logout as logoutService, login as loginService } from "@/lib/auth-service";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
   isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // TODO: Store refresh token in a secure way (e.g., httpOnly cookie or secure storage)
-  // For now, we'll assume it's stored in localStorage (not ideal for production)
-  const getStoredRefreshToken = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("refreshToken");
-    }
-    return null;
-  };
-
-  const setStoredRefreshToken = (token: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("refreshToken", token);
-    }
-  };
-
-  const removeStoredRefreshToken = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("refreshToken");
-    }
-  };
+  const hasCheckedAuth = useRef(false); // Track if we've done the initial auth check
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (status === "authenticated" && session) {
+    // Only check auth status on initial load if we haven't done it yet
+    if (!hasCheckedAuth.current && !user) {
+      hasCheckedAuth.current = true;
+      checkAuthStatus();
+    } else if (user) {
+      // If we already have user data (e.g., from login), skip the initial check
+      hasCheckedAuth.current = true;
+      setIsLoading(false);
+    }
+  }, []); // Empty dependency array to run only once on mount
+
+  const checkAuthStatus = async () => {
+    try {
+      const res = await fetch("/api/auth/session", {
+        credentials: 'include'  // Ensure cookies are included in the request
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
         setIsAuthenticated(true);
       } else {
+        setUser(null);
         setIsAuthenticated(false);
       }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
       setIsLoading(false);
-    };
+    }
+  };
 
-    checkAuthStatus();
-  }, [status, session]);
+  const handleLogin = async (email: string, password: string) => {
+    const result = await loginService({ email, password });
+    
+    if (result.ok) {
+      // Use the returned user data immediately
+      setUser(result.user);
+      setIsAuthenticated(true);
+      hasCheckedAuth.current = true; // Mark that we've authenticated
+      return result;
+    } else {
+      throw new Error(result.error);
+    }
+  };
 
   const handleLogout = async () => {
-    const refreshToken = getStoredRefreshToken();
-    await logoutService(refreshToken);
-    removeStoredRefreshToken();
+    await logoutService();
+    setUser(null);
+    setIsAuthenticated(false);
+    hasCheckedAuth.current = false; // Reset auth check status
   };
 
   const value = {
     isAuthenticated,
-    user: session?.user,
+    user,
     isLoading,
+    login: handleLogin,
     logout: handleLogout,
   };
 

@@ -53,6 +53,8 @@ export const loginEmployeeController = async (
           "Employee is already logged in from another device. Please log out from other devices first."
         );
       }
+    } else {
+      throw new AuthenticationError("Email Address is not registered");
     }
 
     // Attempt to login employee

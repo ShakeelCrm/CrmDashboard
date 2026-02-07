@@ -1,7 +1,5 @@
 "use client";
 
-import { signIn, signOut as nextAuthSignOut } from "next-auth/react";
-
 // Function to refresh access token using refresh token
 export async function refreshAccessToken(refreshToken: string) {
   try {
@@ -25,36 +23,41 @@ export async function refreshAccessToken(refreshToken: string) {
 }
 
 // Function to handle logout
-export async function logout(refreshToken?: string) {
-  if (refreshToken) {
-    // Revoke the refresh token on the server
-    try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
+export async function logout() {
+  try {
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
 
+    if (!res.ok) {
       const data = await res.json();
-      if (!res.ok) {
-        console.error("Error revoking refresh token:", data.error || data.message);
-      }
-    } catch (error) {
-      console.error("Network error revoking refresh token:", error);
-      // Continue with signOut even if token revocation fails
+      console.error("Error logging out:", data.error || data.message);
     }
+    
+    // Clear any client-side cache if needed
+    // For example, if you're storing user data in a global state
+  } catch (error) {
+    console.error("Network error during logout:", error);
   }
-
-  // Sign out from NextAuth
-  await nextAuthSignOut({ callbackUrl: "/login" });
 }
 
 // Function to handle login
 export async function login(credentials: { email: string; password: string }) {
-  const result = await signIn("credentials", {
-    ...credentials,
-    redirect: false,
-  });
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
 
-  return result;
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || "Login failed");
+    }
+
+    return { ok: true, user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken };
+  } catch (error: any) {
+    return { ok: false, error: error.message };
+  }
 }

@@ -1,38 +1,44 @@
 import { NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const { name, email, password } = await request.json();
 
-    // Forward directly to Express Employee Signup Endpoint
-    const res = await fetch(`${API_URL}/employees/register`, {
+    // Validate input
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { error: "Name, email, and password are required" },
+        { status: 400 }
+      );
+    }
+
+    // Call the backend API
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const res = await fetch(`${BACKEND_URL}/api/v1/employees/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      // Handle the new error response format from the backend
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || data.message || "Signup failed"
-        },
+        { error: data?.error || data?.message || "Registration failed" },
         { status: res.status }
       );
     }
 
-    return NextResponse.json(data);
-  } catch (error: any) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Internal Server Error"
-      },
+      { success: true, message: "User registered successfully", user: data.employee },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error("Signup error:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred during registration" },
       { status: 500 }
     );
   }
