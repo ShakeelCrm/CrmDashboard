@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
       if (accessToken) {
         try {
           const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-          const res = await fetch(`${BACKEND_URL}/api/v1/employees/profile`, {
+          const res = await fetch(`${BACKEND_URL}/api/v1/employees/me`, {
             method: "GET",
             headers: {
               "Authorization": `Bearer ${accessToken}`,
@@ -59,7 +59,7 @@ export async function middleware(request: NextRequest) {
         // Optionally, validate the token with your backend
         try {
           const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-          const res = await fetch(`${BACKEND_URL}/api/v1/employees/profile`, {
+          const res = await fetch(`${BACKEND_URL}/api/v1/employees/me`, {
             method: "GET",
             headers: {
               "Authorization": `Bearer ${accessToken}`,
