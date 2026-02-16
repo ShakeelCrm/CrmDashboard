@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { refreshAccessToken, logout as logoutService, login as loginService } from "@/lib/auth-service";
+import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasCheckedAuth = useRef(false); // Track if we've done the initial auth check
+  const { scheduleTokenRefresh } = useTokenRefresh();
 
   useEffect(() => {
     // Only check auth status on initial load if we haven't done it yet
@@ -36,11 +38,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/auth/session", {
         credentials: 'include'  // Ensure cookies are included in the request
       });
+
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
         setIsAuthenticated(true);
+
+        // Schedule token refresh if we have an access token
+        const accessToken = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("access_token="))
+          ?.split("=")[1];
+
+        if (accessToken) {
+          scheduleTokenRefresh(accessToken);
+        }
       } else {
+        // If session indicates token expired, try a cookie-based refresh (keeps user logged-in)
+        if (res.status === 401) {
+          const errorBody = await res.json().catch(() => ({}));
+          if (errorBody?.requiresRefresh) {
+            try {
+              const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+              if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                // Accept returned user and schedule next refresh
+                setUser(refreshData.employee || refreshData.user || null);
+                setIsAuthenticated(true);
+                if (refreshData.accessToken) {
+                  scheduleTokenRefresh(refreshData.accessToken);
+                }
+                setIsLoading(false);
+                return;
+              }
+            } catch (err) {
+              console.warn('Session refresh failed during checkAuthStatus:', err);
+            }
+          }
+        }
+
         setUser(null);
         setIsAuthenticated(false);
       }
@@ -61,7 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(result.user);
       setIsAuthenticated(true);
       hasCheckedAuth.current = true; // Mark that we've authenticated
-      return result;
+      
+      // Schedule token refresh for the new access token
+      if (result.accessToken) {
+        scheduleTokenRefresh(result.accessToken);
+      }
     } else {
       throw new Error(result.error);
     }

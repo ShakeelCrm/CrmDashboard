@@ -21,7 +21,17 @@ export async function GET(request: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      if (res.status === 401 || res.status === 403) {
+        // Token might be expired, return specific error
+        return NextResponse.json(
+          { error: "Token expired", requiresRefresh: true },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Invalid token" },
+        { status: res.status }
+      );
     }
 
     const userData = await res.json();

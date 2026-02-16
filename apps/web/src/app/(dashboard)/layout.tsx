@@ -4,7 +4,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
 export default function ProtectedLayout({
   children,
 }: {
@@ -43,6 +44,12 @@ export default function ProtectedLayout({
     return null;
   }
 
-  // Render the protected content
-  return <>{children}</>;
+  return (
+    <SidebarProvider className=''>
+      <AppSidebar />
+      <main className="w-screen">
+        {children}
+      </main>
+    </SidebarProvider>
+  )
 }

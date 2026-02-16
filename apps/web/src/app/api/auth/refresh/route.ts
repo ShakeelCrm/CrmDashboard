@@ -3,7 +3,14 @@ import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
-    const { refreshToken } = await request.json();
+    // Safely parse body (may be empty because refresh token is httpOnly)
+    let body: any = {};
+    try { body = await request.json(); } catch (err) { body = {}; }
+
+    // Prefer token from request body, fallback to httpOnly cookie
+    const cookieStore = await cookies();
+    const existingRefreshToken = cookieStore.get("refresh_token")?.value;
+    const refreshToken = body?.refreshToken || existingRefreshToken;
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -12,7 +19,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call the backend API to refresh the token
+    // Call the backend API to refresh the token (we can pass the cookie-derived token)
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     const res = await fetch(`${BACKEND_URL}/api/v1/employees/refresh-token`, {
       method: "POST",
@@ -31,12 +38,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Use returned token or fallback to existing
+    const tokenToUse = data.refreshToken || existingRefreshToken;
+
     // Update the cookies with new tokens
     const response = NextResponse.json(
       { 
         success: true,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken
+        refreshToken: tokenToUse
       },
       { status: 200 }
     );
@@ -45,18 +55,20 @@ export async function POST(request: Request) {
     response.cookies.set("access_token", data.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 10 * 60 * 60, // 10 hours
       path: "/",
       sameSite: "strict",
     });
 
-    response.cookies.set("refresh_token", data.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-      sameSite: "strict",
-    });
+    if (tokenToUse) {
+      response.cookies.set("refresh_token", tokenToUse, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 5 * 24 * 60 * 60, // 5 days
+        path: "/",
+        sameSite: "strict",
+      });
+    }
 
     return response;
   } catch (error: any) {

@@ -46,6 +46,28 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  // If we have a valid httpOnly refresh token, try to refresh on mount so the user
+  // does not need to manually login when access token expired (SSR may have redirected).
+  useEffect(() => {
+    let mounted = true;
+    async function tryRefreshOnMount() {
+      try {
+        const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+        if (!mounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          // If refresh succeeded, redirect to dashboard
+          router.push('/');
+        }
+      } catch (err) {
+        // ignore - user will see login form
+      }
+    }
+
+    tryRefreshOnMount();
+    return () => { mounted = false; };
+  }, [router]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,7 +86,7 @@ export default function LoginPage() {
       
       // Login successful, redirect to dashboard
       router.push("/"); // Redirect to dashboard on success
-      router.refresh();
+      // router.refresh();
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "An unexpected error occurred. Please try again.");

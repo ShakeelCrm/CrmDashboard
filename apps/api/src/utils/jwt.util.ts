@@ -23,7 +23,7 @@ export const generateAccessToken = (payload: TokenPayload): string => {
     payload,
     config.jwtSecret as jwt.Secret,
     {
-      expiresIn: config.jwtAccessExpiration || "15m" // 15 minutes for access token
+      expiresIn: config.jwtAccessExpiration || "1d" // 15 minutes for access token
     } as jwt.SignOptions
   );
 };

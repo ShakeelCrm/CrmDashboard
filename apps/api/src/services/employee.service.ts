@@ -184,6 +184,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
       name: storedToken.employee.name,
     },
     accessToken: newAccessToken,
+    refreshToken: refreshToken,
   };
 };
 
@@ -236,4 +237,23 @@ export const canEmployeeLogin = async (employeeId: number | string): Promise<boo
 
   // If there are active tokens, the employee is already logged in
   return activeTokens === 0;
+};
+
+// Service to cleanup expired refresh tokens
+export const cleanupExpiredTokens = async () => {
+  try {
+    const result = await prisma.refreshToken.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+
+    console.log(`[Token Cleanup] Removed ${result.count} expired tokens`);
+    return result.count;
+  } catch (error) {
+    console.error("[Token Cleanup Error]", error);
+    return 0;
+  }
 };

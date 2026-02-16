@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Check if user is trying to access protected routes (everything except auth pages)
   const isAuthRoute = 
     request.nextUrl.pathname.startsWith('/login') || 

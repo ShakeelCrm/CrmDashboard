@@ -9,6 +9,7 @@ import {
   canEmployeeLogin
 } from "../services/employee.service";
 import { TokenPayload } from "../utils/jwt.util";
+import { comparePassword } from "../utils/password.util";
 import {
   ValidationError,
   AuthenticationError,
@@ -44,17 +45,24 @@ export const loginEmployeeController = async (
       throw new ValidationError("Please provide a valid email address");
     }
 
-    // Check if employee can login (single session enforcement)
+    // Check if employee exists
     const employee = await getEmployeeByEmail(email);
-    if (employee) {
-      const canLogin = await canEmployeeLogin(employee.id.toString());
-      if (!canLogin) {
-        throw new AuthenticationError(
-          "Employee is already logged in from another device. Please log out from other devices first."
-        );
-      }
-    } else {
+    if (!employee) {
       throw new AuthenticationError("Email Address is not registered");
+    }
+
+    // Verify password first before checking session
+    const isPasswordValid = await comparePassword(password, employee.password);
+    if (!isPasswordValid) {
+      throw new AuthenticationError("Invalid email or password");
+    }
+
+    // Check if employee can login (single session enforcement)
+    const canLogin = await canEmployeeLogin(employee.id.toString());
+    if (!canLogin) {
+      throw new AuthenticationError(
+        "Employee is already logged in from another device. Please log out from other devices first."
+      );
     }
 
     // Attempt to login employee
@@ -155,6 +163,7 @@ export const refreshAccessTokenController = async (
     res.status(200).json({
       success: true,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       employee: result.employee,
     });
   } catch (error) {
