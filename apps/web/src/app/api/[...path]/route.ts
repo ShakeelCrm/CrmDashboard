@@ -3,7 +3,7 @@ import { auth } from "@/auth"; // Import auth helper
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-async function proxy(request: NextRequest, { params }: { params: { path: string[] } }) {
+async function proxy(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const session = await auth(); // <--- GET SESSION SERVER-SIDE
   
   // Await params in Next.js 15/16

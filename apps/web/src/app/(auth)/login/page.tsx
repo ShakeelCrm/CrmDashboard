@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ const formSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -56,8 +56,9 @@ export default function LoginPage() {
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
-          // If refresh succeeded, redirect to dashboard
-          router.push('/');
+          // If refresh succeeded, redirect to original destination (callbackUrl) or dashboard
+          const callbackUrl = searchParams.get("callbackUrl") || "/";
+          router.push(callbackUrl);
         }
       } catch (err) {
         // ignore - user will see login form
@@ -84,8 +85,9 @@ export default function LoginPage() {
       // Use the auth context login method
       await login(values.email, values.password);
       
-      // Login successful, redirect to dashboard
-      router.push("/"); // Redirect to dashboard on success
+      // Login successful — redirect to original destination (callbackUrl) or dashboard
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
       // router.refresh();
     } catch (err: any) {
       console.error("Login error:", err);
@@ -160,5 +162,13 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

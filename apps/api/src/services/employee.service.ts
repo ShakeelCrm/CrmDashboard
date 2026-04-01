@@ -1,4 +1,4 @@
-import { prisma } from "@repo/database";
+import { prisma } from "../database/db"; // Import the Prisma client instance
 import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateAccessToken, generateRefreshToken, verifyToken } from "../utils/jwt.util";
 import { TokenPayload } from "../utils/jwt.util";
@@ -38,7 +38,7 @@ export const createEmployee = async ({ email, name, password }: EmployeeInput): 
       email,
       name,
       password: hashedPassword,
-      status: "ACTIVE",
+      status: "DISABLED",
     },
   });
 };
@@ -156,32 +156,31 @@ export const refreshAccessToken = async (refreshToken: string) => {
       },
     },
     include: {
-      employee: true,
+      Employee: true,
     },
   });
 
-  if (!storedToken || !storedToken.employee) {
-    throw new AuthenticationError("Invalid or expired refresh token");
+  if (!storedToken || !storedToken.Employee) {
+    throw new AuthenticationError("Invalid Er expired refresh token");
   }
 
-  // Check if employee is still active
-  if (storedToken.employee.status !== "ACTIVE") {
+  // Check if Employee is still active
+  if (storedToken.Employee.status !== "ACTIVE") {
     throw new AuthenticationError("Employee account is disabled");
   }
-
   // Generate new access token
   const newAccessTokenPayload: TokenPayload = {
-    id: storedToken.employee.id.toString(),
-    email: storedToken.employee.email,
+    id: storedToken.Employee.id.toString(),
+    email: storedToken.Employee.email,
     type: "access"
   };
   const newAccessToken = generateAccessToken(newAccessTokenPayload);
 
   return {
     employee: {
-      id: storedToken.employee.id,
-      email: storedToken.employee.email,
-      name: storedToken.employee.name,
+      id: storedToken.Employee.id,
+      email: storedToken.Employee.email,
+      name: storedToken.Employee.name,
     },
     accessToken: newAccessToken,
     refreshToken: refreshToken,

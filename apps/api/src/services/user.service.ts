@@ -1,4 +1,4 @@
-import { prisma } from "@repo/database";
+import { prisma } from "../database/db"; // Import the Prisma client instance
 import { hashPassword } from "../utils/password.util";
 
 interface UserInput {

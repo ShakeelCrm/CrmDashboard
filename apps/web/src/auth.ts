@@ -18,7 +18,8 @@ declare module "next-auth" {
   }
 }
 
-export const { handlers } = NextAuth({
+export const { handlers, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     // Add other providers here if needed (Google, GitHub, etc.)
     // For now, we're removing the credentials provider since we're using custom API routes

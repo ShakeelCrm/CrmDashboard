@@ -34,12 +34,21 @@ export function setupApiInterceptor() {
     // Check if response is 401 or 403 (unauthorized/forbidden)
     if ((response.status === 401 || response.status === 403)) {
       const request = args[0];
-      const isRefreshTokenRequest =
-        typeof request === "string" &&
-        request.includes("/api/auth/refresh");
+      const requestUrl =
+        typeof request === "string"
+          ? request
+          : request instanceof Request
+          ? request.url
+          : "";
 
-      // Don't try to refresh the refresh endpoint itself
-      if (isRefreshTokenRequest) {
+      const isRefreshTokenRequest = requestUrl.includes("/api/auth/refresh");
+      const isAuthSubmitRequest =
+        requestUrl.includes("/api/auth/login") ||
+        requestUrl.includes("/api/auth/signup") ||
+        requestUrl.includes("/api/auth/session");
+
+      // Don't intercept auth endpoints that are handling login/signup/session directly
+      if (isRefreshTokenRequest || isAuthSubmitRequest) {
         return response;
       }
 
@@ -73,8 +82,8 @@ export function setupApiInterceptor() {
               document.cookie =
                 "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-              // Redirect to login page
-              window.location.href = "/login";
+              // Redirect to login page and preserve attempted path
+              window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
             }
           }
         } catch (error) {
@@ -82,7 +91,7 @@ export function setupApiInterceptor() {
 
           // Network error during refresh, redirect to login
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
           }
         }
       } else {

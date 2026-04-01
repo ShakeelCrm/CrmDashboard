@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar";
+import { Header } from '@/components/header';
+import { data } from '@/lib/sidebar';
 export default function ProtectedLayout({
   children,
 }: {
@@ -44,10 +46,42 @@ export default function ProtectedLayout({
     return null;
   }
 
+  // Function to find the page title based on the current pathname
+  const getPageTitle = (currentPathname: string) => {
+    // Check if we're on the main dashboard page
+    if (currentPathname === '/(dashboard)' || currentPathname === '/' || currentPathname === '') {
+      return 'Dashboard';
+    }
+
+    // Iterate through the navigation items to find a match
+    for (const section of data.navMain) {
+      // Check if the current pathname matches the section's URL
+      if (currentPathname.includes(section.url)) {
+        // If there are sub-items, check for a more specific match
+        if (section.items && section.items.length > 0) {
+          for (const item of section.items) {
+            if (currentPathname.includes(item.url)) {
+              return item.pageTitle || item.title;
+            }
+          }
+        }
+        // If no specific sub-item matched, return the section's page title
+        return section.pageTitle || section.title;
+      }
+    }
+
+    // Default to Dashboard if no specific route matches
+    return 'Dashboard';
+  };
+
+  const pageTitle = getPageTitle(pathname);
+
   return (
     <SidebarProvider className=''>
       <AppSidebar />
       <main className="w-screen">
+        <Header title={pageTitle} />
+
         {children}
       </main>
     </SidebarProvider>

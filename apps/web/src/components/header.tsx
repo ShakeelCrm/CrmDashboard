@@ -6,7 +6,11 @@ import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SidebarTrigger } from './ui/sidebar';
 
-export function Header() {
+type HeaderProps = {
+  title?: string;
+};
+
+export function Header({ title = "Employee Portal" }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -21,7 +25,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
       <SidebarTrigger />
-          <h1 className="text-xl font-bold">Employee Portal</h1>
+          <h1 className="text-xl font-bold">{title}</h1>
         </div>
 
         <div className="flex items-center gap-4">
