@@ -46,14 +46,14 @@ export const createEmployee = async ({ email, name, password }: EmployeeInput): 
 // Service to get an employee by ID
 export const getEmployeeById = async (id: number | string): Promise<PrismaEmployee | null> => {
   const employeeId = typeof id === 'string' ? parseInt(id, 10) : id;
-  return await prisma.employee.findUnique({
+  return await prisma.employee.findFirst({
     where: { id: employeeId },
   });
-};
+};  
 
 // Service to get an employee by email
 export const getEmployeeByEmail = async (email: string): Promise<PrismaEmployee | null> => {
-  return await prisma.employee.findUnique({
+  return await prisma.employee.findFirst({
     where: { email },
   });
 };

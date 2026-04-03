@@ -37,14 +37,14 @@ export const createUser = async ({ email, name, password }: UserInput): Promise<
 // Service to get a user by ID
 export const getUserById = async (id: number | string): Promise<PrismaUser | null> => {
   const userId = typeof id === 'string' ? parseInt(id, 10) : id;
-  return await prisma.user.findUnique({
+  return await prisma.user.findFirst({
     where: { id: userId },
   });
 };
 
 // Service to get a user by email
 export const getUserByEmail = async (email: string): Promise<PrismaUser | null> => {
-  return await prisma.user.findUnique({
+  return await prisma.user.findFirst({
     where: { email },
   });
 };

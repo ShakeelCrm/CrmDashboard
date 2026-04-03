@@ -21,13 +21,13 @@ export const createEmployee = async ({ email, name, password }) => {
 // Service to get an employee by ID
 export const getEmployeeById = async (id) => {
     const employeeId = typeof id === 'string' ? parseInt(id, 10) : id;
-    return await prisma.employee.findUnique({
+    return await prisma.employee.findFirst({
         where: { id: employeeId },
     });
 };
 // Service to get an employee by email
 export const getEmployeeByEmail = async (email) => {
-    return await prisma.employee.findUnique({
+    return await prisma.employee.findFirst({
         where: { email },
     });
 };

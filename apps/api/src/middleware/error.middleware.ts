@@ -28,7 +28,7 @@ export const errorHandler = (
   // Handle unexpected errors
   res.status(500).json({
     success: false,
-    error: "Internal Server Error",
+    error: "Internal Server Error "+err.message,
     statusCode: 500,
   });
 };

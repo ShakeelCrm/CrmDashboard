@@ -99,7 +99,7 @@ const newUser = await createUser({
 **Return Type**: `Promise<PrismaUser | null>`
 
 **Process Flow**:
-1. Calls Prisma's `user.findUnique()` method with the provided ID
+1. Calls Prisma's `user.findFirst()` method with the provided ID
 2. Returns the user if found, null otherwise
 
 **Usage**:
@@ -116,7 +116,7 @@ const user = await getUserById('user_id_string');
 **Return Type**: `Promise<PrismaUser | null>`
 
 **Process Flow**:
-1. Calls Prisma's `user.findUnique()` method with the provided email
+1. Calls Prisma's `user.findFirst()` method with the provided email
 2. Returns the user if found, null otherwise
 
 **Usage**:
