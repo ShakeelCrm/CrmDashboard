@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "prisma": {
-    "schema": "prisma/schema.prisma"
+    "schema": "./prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
