@@ -32,7 +32,7 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
       statusText: response.statusText,
       headers: response.headers,
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Backend unreachable" }, { status: 502 });
   }
 }

@@ -44,7 +44,7 @@ export function useTokenRefresh() {
 
       // Only schedule if time is positive
       if (refreshTime > 0) {
-        console.log(`[Token Refresh] Scheduled refresh in ${(refreshTime / 1000).toFixed(2)}s (buffer: ${(bufferTime / 1000).toFixed(2)}s, expires in: ${(timeUntilExpiry / 1000).toFixed(2)}s)`);
+        console.warn(`[Token Refresh] Scheduled refresh in ${(refreshTime / 1000).toFixed(2)}s (buffer: ${(bufferTime / 1000).toFixed(2)}s, expires in: ${(timeUntilExpiry / 1000).toFixed(2)}s)`);
         refreshTimeoutRef.current = setTimeout(async () => {
           if (isRefreshingRef.current) {
             return; // Prevent concurrent refresh attempts
@@ -52,7 +52,7 @@ export function useTokenRefresh() {
 
           isRefreshingRef.current = true;
           try {
-            console.log("[Token Refresh] Executing token refresh...");
+            console.warn("[Token Refresh] Executing token refresh...");
             const response = await fetch("/api/auth/refresh", {
               method: "POST",
               credentials: "include",
@@ -62,7 +62,7 @@ export function useTokenRefresh() {
 
             if (response.ok && data.accessToken) {
               // Token refreshed successfully, schedule next refresh
-              console.log("[Token Refresh] ✓ Token refreshed successfully");
+              console.warn("[Token Refresh] ✓ Token refreshed successfully");
               scheduleTokenRefresh(data.accessToken);
             } else {
               // Refresh failed, try again in 5 minutes

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
-import { refreshAccessToken, logout as logoutService, login as loginService } from "@/lib/auth-service";
+import { logout as logoutService, login as loginService } from "@/lib/auth-service";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 
+/* eslint-disable no-unused-vars */
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
@@ -11,6 +12,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
+/* eslint-enable no-unused-vars */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

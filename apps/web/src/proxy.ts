@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
               return NextResponse.redirect(new URL('/', request.url));
             }
           }
-        } catch (error) {
+        } catch (_error) {
           // If there's an error validating the token, allow access to login
         }
       }
@@ -73,7 +73,7 @@ export async function proxy(request: NextRequest) {
             const redirectUrl = `/login?callbackUrl=${encodeURIComponent(requestedPage)}`;
             return NextResponse.redirect(new URL(redirectUrl, request.url));
           }
-        } catch (error) {
+        } catch (_error) {
           // If there's an error validating the token, redirect to login
           const requestedPage = request.nextUrl.pathname;
           const redirectUrl = `/login?callbackUrl=${encodeURIComponent(requestedPage)}`;

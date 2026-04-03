@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     // Safely parse body (may be empty because refresh token is httpOnly)
     let body: any = {};
-    try { body = await request.json(); } catch (err) { body = {}; }
+    try { body = await request.json(); } catch (_err) { body = {}; }
 
     // Prefer token from request body, fallback to httpOnly cookie
     const cookieStore = await cookies();

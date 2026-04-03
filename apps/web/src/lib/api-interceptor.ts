@@ -5,19 +5,19 @@
 
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (value: Response) => void;
-  reject: (reason?: any) => void;
+  resolve: (_value: Response) => void;
+  reject: (_reason?: any) => void;
 }> = [];
 
 const processQueue = (
   error: any,
-  token: string = ""
+  _token: string = ""
 ) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(new Response(JSON.stringify({ token })));
+      prom.resolve(new Response(JSON.stringify({ _token })));
     }
   });
 

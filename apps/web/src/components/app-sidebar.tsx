@@ -3,22 +3,11 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar"
 
 import { data } from "@/lib/sidebar"
-import { DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { TeamSwitcher } from "./TeamSwitcher"
 import { NavMain } from "./nav-main"
-import { NavProjects } from "./nav-projects"
-import { NavUser } from "./nav-user"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     // return (

@@ -55,12 +55,11 @@ function LoginPageContent() {
         const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
         if (!mounted) return;
         if (res.ok) {
-          const data = await res.json();
           // If refresh succeeded, redirect to original destination (callbackUrl) or dashboard
           const callbackUrl = searchParams.get("callbackUrl") || "/";
           router.push(callbackUrl);
         }
-      } catch (err) {
+      } catch (_err) {
         // ignore - user will see login form
       }
     }

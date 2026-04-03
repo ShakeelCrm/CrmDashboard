@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 
-// Extend NextAuth User, Session, and JWT types to include custom fields
+// Extend NextAuth types for custom fields
+/* eslint-disable no-unused-vars */
 declare module "next-auth" {
   interface User {
     accessToken?: string;
@@ -17,6 +18,7 @@ declare module "next-auth" {
     refreshToken?: string;
   }
 }
+/* eslint-enable no-unused-vars */
 
 export const { handlers, auth } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
