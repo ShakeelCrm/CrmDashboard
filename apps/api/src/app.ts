@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 
+import { prisma } from "./database/db";
 import { userRoutes } from "./routes/user.route";
 import { authRoutes } from "./routes/auth.route";
 import { employeeAuthRoutes } from "./routes/employee.route";
@@ -40,7 +41,29 @@ app.use("/api/v1/employees", employeeAuthRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
+  console.log("runing")
   res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
+// Database health check route
+app.get("/health/db", async (req, res) => {
+  try {
+    // Try to fetch one employee to verify DB connection
+    await prisma.employee.findFirst({ take: 1 });
+    res.status(200).json({ 
+      status: "OK", 
+      database: "connected",
+      timestamp: new Date().toISOString() 
+    });
+  } catch (error) {
+    console.error("Database health check failed:", error);
+    res.status(503).json({ 
+      status: "ERROR", 
+      database: "disconnected",
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString() 
+    });
+  }
 });
 
 // 404 handler
