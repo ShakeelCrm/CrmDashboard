@@ -11,7 +11,14 @@ import { cleanupExpiredTokens } from "./services/employee.service";
 export const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.com'] // Replace with your actual frontend production URL
+    : ['http://localhost:3000'], // Allow common dev ports
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json()); 
 
 // Initialize token cleanup job (runs every 24 hours)
